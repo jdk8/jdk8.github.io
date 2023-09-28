@@ -33,6 +33,7 @@ Kafka的ack机制，指的是producer的消息发送确认机制，这直接影�
 **min.insync.replicas**
 broker端有`min.insync.replicas`配置，比如副本数为3，`min.insync.replicas`配置2，表示至少2个ISR（包括leader）确认收到消息，leader才回复producer消息提交成功。`min.insync.replicas`只有在producer的ack配置为-1（即all）才会生效。
 `min.insync.replicas`默认值是1，可以在创建topic指定（跟着topic走），也可以在配置文件中指定（所有topic使用）。
+这个配置的目的是保持提升可用性，如果一个副本挂了，仍然可以工作。
 
 
 每个partition的leader或者follower都有LEO(日志末端位移)，HW(高水位)：
