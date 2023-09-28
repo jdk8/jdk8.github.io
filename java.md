@@ -349,6 +349,7 @@ ThreadPoolExecutor有如下参数：
 
 ```java
 new ThreadFactoryBuilder().setNameFormat("xxx-%d").build();
+
 ```
 
 * handler：线程池无法分配任务时调用handler。
@@ -381,6 +382,7 @@ public void execute(Runnable command) {
    else if (!addWorker(command, false))        
        reject(command);
    	}
+
 ```
 
 ### 4.1.2. callable和Future
@@ -394,6 +396,7 @@ Future<String> f = executorService.submit(new Callable<String>() {
             return "Hello world";    
     }});
     System.out.println(f.get());
+
 ```
 
 ### 4.1.3. CompletableFuture
@@ -412,6 +415,7 @@ Java8扩展了Future为CompletableFuture，CompletableFuture提供一种非阻�
 ```java
 CompletableFuture<String> helloFuture = CompletableFuture.supplyAsync(() -> "hello");
 CompletableFuture<String> helloworldFuture = helloFuture.thenApply(s -> s+ " world");
+
 ```
 
 可以调用CompletableFuture的thenCompose方法，可以将CompletableFuture的结果传入另一个CompletableFuture对象的计算流程，即合并两个CompletableFuture，返回一个新的CompletableFuture。
@@ -419,6 +423,7 @@ CompletableFuture<String> helloworldFuture = helloFuture.thenApply(s -> s+ " wor
 ```java
 CompletableFuture<String> helloFuture = CompletableFuture.supplyAsync(() -> "hello");
 CompletableFuture<String> helloworldFuture = helloFuture.thenCompose(s -> CompletableFuture.supplyAsync(() -> s + " world"));
+
 ```
 
 this.applyToEither(other, fn)将this和other优先执行完的那个作为参数传入到fn，举例如下：
@@ -444,6 +449,7 @@ Executors.newSingleThreadScheduledExecutor().schedule(() ->
  });
 
 /*输出：timeout exception*/
+
 ```
 
 ### 4.1.4. 常用的线程池
@@ -458,6 +464,7 @@ public static ExecutorService newFixedThreadPool(int nThreads) {
                 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<Runnable>());
 }
+
 ```
 
 #### 4.1.4.2. CachedThreadPool
@@ -470,6 +477,7 @@ public static ExecutorService newCachedThreadPool() {
                 60L, TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>());
 }
+
 ```
 
 #### 4.1.4.3. ScheduledExecutorService
@@ -493,6 +501,7 @@ scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
  run runnable3
  run runnable4
  run runnable5*/
+
 ```
 
 ### 4.1.5. ForkJoinPool
@@ -503,6 +512,7 @@ scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 // 100为线程池大小
 ForkJoinPool forkJoinPool = new ForkJoinPool(100);
 forkJoinPool.submit(...)
+
 ```
 
 ### 4.1.6 线程池处理分治任务---如何避免死锁
@@ -539,6 +549,7 @@ public class Deadlock {
  ((t = Thread.currentThread()) instanceof ForkJoinWorkerThread) ?
             (wt = (ForkJoinWorkerThread)t).pool.
             awaitJoin(wt.workQueue, this, 0L) :
+
 ```
 
 分析：当执行到第100个任务时，前99个任务在线程池里sleep，第100个任务开始执行，Arrays.parallelSort会根据数组长度进行拆分，拆分成子任务进行归并排序，子任务是放到当前线程所在的线程池里执行，而此时线程池已满，第100个任务出不来（要等子任务做完），子任务进不去队列，发生了死锁。发生这种情况，只能等前99个任务执行结束，如果前99个任务又要依赖第100个任务，则会无限期死锁。
@@ -581,7 +592,7 @@ Java对象头里的Mark Word(32Bit/64Bit)默认存储了对象的hashCode，分�
 
 ### 4.3.2. wait集合和通知机制
 
-使用synchronized，wait，notify，notifyAll实现线程间同步，需要注意的是wait会释放锁。
+使用synchronized，wait，notify，notifyAll实现线程间同步，需要注意的是wait会释放锁！！！。
 
 ### 4.3.3. 同步模版
 
@@ -613,6 +624,46 @@ public void BThread() {
   }
 }
 ```
+
+#### 4.3.3.1 同步例子-读写锁
+
+```java
+public class ReadWriteLock {
+    private AtomicInteger sigWrite = new AtomicInteger(0);
+    private AtomicInteger sigRead = new AtomicInteger(0);
+
+    public void readLockLock() throws InterruptedException {
+        synchronized (this) {
+            while (sigWrite.get() != 0) {
+                wait();
+            }
+            sigRead.incrementAndGet();
+        }
+    }
+
+    public void readLockUnlock() {
+        synchronized (this) {
+            sigRead.decrementAndGet();
+            this.notifyAll();
+        }
+    }
+
+    public void writeLockLock() throws InterruptedException {
+        synchronized (this) {
+            while (sigRead.get() != 0 || !sigWrite.compareAndSet(0, 1)) {
+                wait();
+            }
+        }
+    }
+
+    public void writeLockUnlock() {
+        sigWrite.set(0);
+        this.notifyAll();
+    }
+}
+```
+
+
 
 ## 4.4. 内存模型
 
@@ -719,6 +770,8 @@ class FinalWrapper<T> {
 ### 4.5.1. AQS
 
 AQS是一种构建并发工具(包括锁等同步器)的框架，由一个volatile int的state和队列构成，分为独占(锁)和共享(信号量等)两种类型。 
+
+AQS是一个抽象类，提供compareAndSetState方法。
 
 * 公平锁：如果state=0且队列为空，执行CAS(state, 0, 1)，成功则获取锁，否则入队
 
