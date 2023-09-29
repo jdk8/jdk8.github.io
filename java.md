@@ -349,7 +349,6 @@ ThreadPoolExecutor有如下参数：
 
 ```java
 new ThreadFactoryBuilder().setNameFormat("xxx-%d").build();
-
 ```
 
 * handler：线程池无法分配任务时调用handler。
@@ -382,7 +381,6 @@ public void execute(Runnable command) {
    else if (!addWorker(command, false))        
        reject(command);
    	}
-
 ```
 
 ### 4.1.2. callable和Future
@@ -396,7 +394,6 @@ Future<String> f = executorService.submit(new Callable<String>() {
             return "Hello world";    
     }});
     System.out.println(f.get());
-
 ```
 
 ### 4.1.3. CompletableFuture
@@ -415,7 +412,6 @@ Java8扩展了Future为CompletableFuture，CompletableFuture提供一种非阻�
 ```java
 CompletableFuture<String> helloFuture = CompletableFuture.supplyAsync(() -> "hello");
 CompletableFuture<String> helloworldFuture = helloFuture.thenApply(s -> s+ " world");
-
 ```
 
 可以调用CompletableFuture的thenCompose方法，可以将CompletableFuture的结果传入另一个CompletableFuture对象的计算流程，即合并两个CompletableFuture，返回一个新的CompletableFuture。
@@ -423,7 +419,6 @@ CompletableFuture<String> helloworldFuture = helloFuture.thenApply(s -> s+ " wor
 ```java
 CompletableFuture<String> helloFuture = CompletableFuture.supplyAsync(() -> "hello");
 CompletableFuture<String> helloworldFuture = helloFuture.thenCompose(s -> CompletableFuture.supplyAsync(() -> s + " world"));
-
 ```
 
 this.applyToEither(other, fn)将this和other优先执行完的那个作为参数传入到fn，举例如下：
@@ -449,7 +444,6 @@ Executors.newSingleThreadScheduledExecutor().schedule(() ->
  });
 
 /*输出：timeout exception*/
-
 ```
 
 ### 4.1.4. 常用的线程池
@@ -464,7 +458,6 @@ public static ExecutorService newFixedThreadPool(int nThreads) {
                 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<Runnable>());
 }
-
 ```
 
 #### 4.1.4.2. CachedThreadPool
@@ -477,7 +470,6 @@ public static ExecutorService newCachedThreadPool() {
                 60L, TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>());
 }
-
 ```
 
 #### 4.1.4.3. ScheduledExecutorService
@@ -501,7 +493,6 @@ scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
  run runnable3
  run runnable4
  run runnable5*/
-
 ```
 
 ### 4.1.5. ForkJoinPool
@@ -512,7 +503,6 @@ scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 // 100为线程池大小
 ForkJoinPool forkJoinPool = new ForkJoinPool(100);
 forkJoinPool.submit(...)
-
 ```
 
 ### 4.1.6 线程池处理分治任务---如何避免死锁
@@ -549,7 +539,6 @@ public class Deadlock {
  ((t = Thread.currentThread()) instanceof ForkJoinWorkerThread) ?
             (wt = (ForkJoinWorkerThread)t).pool.
             awaitJoin(wt.workQueue, this, 0L) :
-
 ```
 
 分析：当执行到第100个任务时，前99个任务在线程池里sleep，第100个任务开始执行，Arrays.parallelSort会根据数组长度进行拆分，拆分成子任务进行归并排序，子任务是放到当前线程所在的线程池里执行，而此时线程池已满，第100个任务出不来（要等子任务做完），子任务进不去队列，发生了死锁。发生这种情况，只能等前99个任务执行结束，如果前99个任务又要依赖第100个任务，则会无限期死锁。
@@ -590,9 +579,11 @@ Java对象头里的Mark Word(32Bit/64Bit)默认存储了对象的hashCode，分�
 * 偏向锁：Mark Word存储了拥有该偏向锁的线程ID，线程进入临界区时只需要探测是否存储的是指向该线程的偏向锁，如果是，直接进入临界区。否则看当前的锁标志是否为1(即偏向锁)，如果是，则CAS将偏向锁指向该线程，如果是无锁状态，则CAS竞争锁。当发生竞争时，偏向锁尝试进行撤销，如果占用偏向锁的线程还活着，锁会升级，否则将Mark Word里的锁状态清除。
 * 轻量级锁：当前线程的stack会创建一块lock record的空间，将对象的Mark Word复制到lock record，然后CAS替换Mark word的内容为指向lock record的指针，并将lock record指向Mark word，如果CAS成功则获取到轻量级锁，否则自旋等待一定次数，超过一定条件后，转为重量级锁。
 
-### 4.3.2. wait集合和通知机制
+### 4.3.2. Monitor同步机制
 
 使用synchronized，wait，notify，notifyAll实现线程间同步，需要注意的是wait会释放锁！！！。
+
+notifyAll会唤醒在Monitor上wait的所有线程，这些线程并不会立刻获得锁并执行下去，而是等待锁的释放，然后争用锁，谁获得了锁谁就可以执行下去，否则继续wait。
 
 ### 4.3.3. 同步模版
 
@@ -657,8 +648,10 @@ public class ReadWriteLock {
     }
 
     public void writeLockUnlock() {
-        sigWrite.set(0);
-        this.notifyAll();
+        synchronized (this) {
+            sigWrite.set(0);
+            this.notifyAll();
+        }
     }
 }
 ```
@@ -769,15 +762,105 @@ class FinalWrapper<T> {
 
 ### 4.5.1. AQS
 
-AQS是一种构建并发工具(包括锁等同步器)的框架，由一个volatile int的state和队列构成，分为独占(锁)和共享(信号量等)两种类型。 
+AQS是一种构建并发工具(包括锁等同步器)的框架，由一个volatile int的state和队列（存放线程）构成，分为独占(锁)和共享(信号量等)两种类型。 
 
-AQS是一个抽象类，提供compareAndSetState方法。
+AQS是一个抽象类，提供compareAndSetState方法尝试获取同步状态(state)，有下面两种方式获取同步状态。
 
-* 公平锁：如果state=0且队列为空，执行CAS(state, 0, 1)，成功则获取锁，否则入队
+* 公平方式：如果state=0且队列为空，执行CAS(state, 0, 1)，成功则获取锁，否则入队。
 
-* 非公平锁：直接CAS(state, 0, 1)，成功则获取锁，如果失败，判断state是否为0，如果是，再执行一次CAS(state, 0, 1)，成功则获取锁，否则入队。
+* 非公平方式：直接CAS(state, 0, 1)，成功则获取锁，如果失败，判断state是否为0，如果是，再执行一次CAS(state, 0, 1)，成功则获取锁，否则入队。
 
-队列中的每个节点都会自旋判断当前节点是否为头部节点且CAS获取同步状态成功，如果没有达到条件，则阻塞等待被唤醒；如果达到条件，则从队列移除，获取到同步状态。
+当进入到队列后，队列中的每个节点都会自旋判断当前节点是否为头部节点且CAS获取同步状态成功，如果没有达到条件，则阻塞(LockSupport.park)等待被唤醒(LockSupport.unpark，由已经获取到同步状态的线程调用)；如果达到条件，则从队列移除，获取到同步状态。
+
+AQS还支持线程同步模型，同Monitor的wait和notify一样，AQS中对应的分别为Condition、await和signal，编程模式是一样的，下面是用Condition实现的读写锁：
+
+```java
+public class ReadWriteLock {
+    private AtomicInteger sigWrite = new AtomicInteger(0);
+    private AtomicInteger sigRead = new AtomicInteger(0);
+
+    private ReentrantLock lock = new ReentrantLock();
+
+    private Condition condition = lock.newCondition();
+
+    public void readLockLock() throws InterruptedException {
+        lock.lock();
+        while (sigWrite.get() != 0) {
+            condition.await();
+        }
+        sigRead.incrementAndGet();
+        lock.unlock();
+    }
+
+    public void readLockUnlock() {
+        lock.lock();
+        sigRead.decrementAndGet();
+        condition.signalAll();
+        lock.unlock();
+    }
+
+    public void writeLockLock() throws InterruptedException {
+        lock.lock();
+        while (sigRead.get() != 0 || !sigWrite.compareAndSet(0, 1)) {
+            condition.await();
+        }
+        lock.unlock();
+    }
+
+    public void writeLockUnlock() {
+        lock.lock();
+        condition.signalAll();
+        sigWrite.set(0);
+        lock.unlock();
+    }
+}
+```
+
+下面是读写锁的一个测试程序：
+
+```java
+    public static void main(String[] args) {
+        final ReadWriteLock readWriteLock = new ReadWriteLock();
+
+        for (int i=0;i<1000;i++) {
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        readWriteLock.readLockLock();
+                        System.out.println("read begin...");
+                        Thread.sleep(10);
+                        System.out.println("read end...");
+                        readWriteLock.readLockUnlock();
+                    } catch (Exception e) {
+                    }
+                }
+            }).start();
+        }
+
+        for (int i=0;i<10;i++) {
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        readWriteLock.writeLockLock();
+                        System.out.println("write begin...");
+                        Thread.sleep(2000);
+                        System.out.println("write end...");
+                        readWriteLock.writeLockUnlock();
+                    } catch (Exception e) {
+                    }
+                }
+            }).start();
+        }
+
+        try {
+            Thread.sleep(1000000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+```
+
+
 
 ### 4.5.2. CountdownLatch
 
