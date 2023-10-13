@@ -370,6 +370,7 @@ public class TestApp {
     SpringApplication.run(TestApp.class, args);  
   }
 }
+
 ```
 
 SpringBootApplication是EnableAutoConfiguration，SpringBootConfiguration，和ComponentScan的复合注解。
@@ -401,7 +402,9 @@ onRefresh();
 registerListeners();
 
 // 初始化bean->注入bean->bean后处理->init方法
-// 代理（AOP）在此被初始化：AbstractAutoProxyCreator.createProxy->ProxyFactory.getProxy->CglibAopProxy.getProxy
+// 代理（AOP）在此被初始化，在注入bean的时候，判断是否为AOP proxy，通过下面的方法注入proxy
+// 每个代理对象都会对应一个CglibAopProxy或者JdkDynamicAopProxy
+//AbstractAutoProxyCreator.createProxy->ProxyFactory.getProxy(这里会根据配置决定创建CglibAopProxy或者JdkDynamicAopProxy)->CglibAopProxy.getProxy
 finishBeanFactoryInitialization(beanFactory);
 
 // 发布ContextRefreshedEvent事件
@@ -432,9 +435,9 @@ application.addListeners(new ApplicationContextEventListener());
 事件类型：
 
 * ContextRefreshedEvent(继承ApplicationContextEvent)(Springboot应用启动)： Published when the ApplicationContext is initialized or refreshed (for example, by using the refresh() method on the ConfigurableApplicationContext interface). Here, “initialized” means that all beans are loaded, post-processor beans are detected and activated, singletons are pre-instantiated, and the ApplicationContext object is ready for use. As long as the context has not been closed, a refresh can be triggered multiple times, provided that the chosen ApplicationContext actually supports such “hot” refreshes. For example, XmlWebApplicationContext supports hot refreshes, but GenericApplicationContext does not. 
-*  ContextStartedEvent： Published when the ApplicationContext is started by using the start() method on the ConfigurableApplicationContext interface. Here, “started” means that all Lifecycle beans receive an explicit start signal. Typically, this signal is used to restart beans after an explicit stop, but it may also be used to start components that have not been configured for autostart (for example, components that have not already started on initialization). 
-*  ContextStoppedEvent： Published when the ApplicationContext is stopped by using the stop() method on the ConfigurableApplicationContext interface. Here, “stopped” means that all Lifecycle beans receive an explicit stop signal. A stopped context may be restarted through a start() call. 
-*  ContextClosedEvent(Spring应用关闭)： Published when the ApplicationContext is closed by using the close() method on the ConfigurableApplicationContext interface. Here, “closed” means that all singleton beans are destroyed. A closed context reaches its end of life. It cannot be refreshed or restarted. 
+* ContextStartedEvent： Published when the ApplicationContext is started by using the start() method on the ConfigurableApplicationContext interface. Here, “started” means that all Lifecycle beans receive an explicit start signal. Typically, this signal is used to restart beans after an explicit stop, but it may also be used to start components that have not been configured for autostart (for example, components that have not already started on initialization). 
+* ContextStoppedEvent： Published when the ApplicationContext is stopped by using the stop() method on the ConfigurableApplicationContext interface. Here, “stopped” means that all Lifecycle beans receive an explicit stop signal. A stopped context may be restarted through a start() call. 
+* ContextClosedEvent(Spring应用关闭)： Published when the ApplicationContext is closed by using the close() method on the ConfigurableApplicationContext interface. Here, “closed” means that all singleton beans are destroyed. A closed context reaches its end of life. It cannot be refreshed or restarted. 
 
 **BeanPostProcessor**
 
