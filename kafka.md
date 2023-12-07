@@ -51,6 +51,15 @@ leader的HW决定了消费者可以消费到的数据，跟不上leader速度(�
 ![在这里插入图片描述](kafka2.png)
 
 
+**Rebalance** is the re-assignment of partition ownership among consumers within a given consumer group. Remember that every consumer in a consumer group is assigned one or more topic partitions exclusively.
+
+A Rebalance happens when:
+
+* a consumer JOINS the group
+* a consumer SHUTS DOWN cleanly
+* a consumer is considered DEAD by the group coordinator. This may happen after a crash or when the consumer is busy with a long-running processing, which means that no heartbeats has been sent in the meanwhile by the consumer to the group coordinator within the configured session interval
+* new partitions are added
+
 ## 高吞吐
 
 ### Page Cache和内存映射文件
