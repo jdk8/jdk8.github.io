@@ -14,6 +14,18 @@ TCP四次挥手：
 
 CLOSE_WAIT过多原因：被动关闭方没有主动关闭连接。
 
+**http**
+
+http协议是在tcp/ip协议基础上，http1.1协议之后支持长连接，客户端和服务端都有keepalive参数，并优先满足服务端的配置。双方都可以主动关闭连接。keepalive一共有两个参数：
+
+```
+Keep-Alive: 
+  timeout=5, 超时
+  max=1000 最多发送请求数
+```
+
+如果http客户端使用连接池，可能会报connection reset的error，因为服务端会将连接关闭，而客户端继续向服务端发请求。
+
 **epoll**
 
 epoll一共两种模式，水平触发(LT)和边缘触发(ET)，主要的区别在于对读，写数据的处理:
