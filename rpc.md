@@ -28,11 +28,11 @@ Keep-Alive:
 
 **NIO**
 
-NIO就是非阻塞IO，试想一下一些IO函数如：listen（从客户端接受请求）、connect（连接服务端）、read（读）、write（写），因为不确定IO事件何时到达，如果线程一直在等待事件到达后再去处理，就会浪费线程资源，这个时候线程只能在等待。
+NIO就是非阻塞IO，试想一下一些IO函数如：accept（从客户端接受请求）、connect（连接服务端）、read（读）、write（写），因为不确定IO事件何时到达，如果线程一直在等待事件到达后再去处理，就会浪费线程资源，这个时候线程只能在等待。
 
 Java使用Selector作为NIO的核心，服务端的流程如下：
 
-listen channel注册到selector，死循环轮训selector事件，这时候会收到connect的请求，处理后得到connect channel，这个channel会注册到selector中，在后续的轮训中，得到read或者write的事件，并对其进行处理。
+accept channel注册到selector（注册accept事件），死循环轮训selector事件，这时候会收到connect的请求，处理后得到connect channel，这个channel会注册到selector中（注册读、写事件），在后续的轮训中，得到read或者write的事件，并对其进行处理。
 
 注意这里的read或者write事件，其实是缓冲区可读、可写的信号，当收到这些事件信号时，再对缓冲区读，写就不需要阻塞了，可以参考下面的水平触发和边缘触发。
 
