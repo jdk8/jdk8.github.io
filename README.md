@@ -10,6 +10,7 @@
 7. [rpc](https://jdk8.github.io/rpc)
 8. [spring](https://jdk8.github.io/spring)
 9. [git](https://jdk8.github.io/git)
+10. [rpc](https://jdk8.github.io/distributed)
 
 ## 工作经验
 1. [搭建算法在线服务](https://jdk8.github.io/algorithm)
