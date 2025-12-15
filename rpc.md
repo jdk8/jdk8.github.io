@@ -322,39 +322,6 @@ etcd做服务发现的思路如下：
 * provider服务计划关闭后，需要先从ETCD注销，经过一段优雅停机后，再关闭服务。
 * consumer需要有熔断provider的策略。
 
-### 4.1.2 Raft协议
-
-etcd实现了Raft协议，Raft协议分选主(Leader Election)和日志复制(Log Replication)两部分。
-
-### 4.1.3 选主
-
-Raft为集群中的节点定义了三种状态，分别是Follower，Candidate，Leader。
-
-选主步骤如下：
-
-* Candidate状态的节点会向其他节点发送vote_request，参数需要带上当前节点的term，term表示第几轮选举，每当Candidate发起新一轮的投票请求，term就会加1，带有过期term的消息不会被处理(如heartbeat，vote_request，vote)。
-* Follower节点收到vote_request，如果Follower节点检测Leader故障(**election timeout**时间内没收到heartbeat)，且在该term并未投过票，则投票给Candidate。
-* 某Candidate收到超过半数的投票，成为Leader。
-* Leader节点每隔**heartbeat timeout**时间就会给其他节点发送心跳。**election timeout**的时间是150~300毫秒之间的随机值。
-
-### 4.1.4. 日志复制
-
-Raft协议规定只能通过Leader来写，可以从任意节点读。Leader通过日志复制的方式将数据同步到其他节点。Leader需要更新的数据封装在Append Entries消息中，通过heartbeat传输给其他节点。写数据一共分两个阶段：
-
-* 第一阶段：写日志，不提交。Append Entries={在日志中的编号，要更新的数据，不提交}。当Follower收到Append Entries消息后，如果日志不冲突，将Append Entries插入到日志中，回应Leader可写。当Leader收到超过半数的节点回应时，发起第二阶段写。
-* 第二阶段：提交。Append Entries={在日志中的编号，提交}，Leader回应客户端写成功。当Follower收到Append Entries消息后，在日志中提交数据。
-
-
-https://ms2008.github.io/2019/12/04/etcd-rumor/
-
-### 4.1.5 线性一致性
-
-**Replicated State Machine**，**Read Index**，**Lease Read**，**Follower Read**
-
-https://blog.csdn.net/z69183787/article/details/112168120
-
-
-
 ## 4.2 Zookeeper
 
 ### 4.2.1. Curator
