@@ -36,7 +36,7 @@ Raft协议规定只能通过Leader来写，可以从任意节点读。Leader通�
 
 Raft节点收到提交的log后，会将其应用到自己的状态机（内存、磁盘等），当收到某条commit的log，记为commit index，当某条log被应用到状态机，记为apply index。如果各个节点的初始状态相同，应用相同的log后，最终各个节点会达到相同的状态。
 
-#### Aeron Cluster
+### Aeron Cluster
 
 Aeron Cluster实现了Raft算法，下面是Aeron集群核心方法：
 
@@ -44,6 +44,7 @@ Aeron Cluster实现了Raft算法，下面是Aeron集群核心方法：
 public interface ClusteredService
 {
     // Start event for the service where the service can perform any initialisation required and load snapshot state.
+    // 加载快照
     void onStart(Cluster cluster, Image snapshotImage);
 
     // A session has been opened for a client to the cluster.
@@ -53,26 +54,55 @@ public interface ClusteredService
     void onSessionClose(ClientSession session, long timestamp, CloseReason closeReason);
 
     // A message has been received to be processed by a clustered service.
-    void onSessionMessage;
+    // 这个消息已经集群共识了
+    void onSessionMessage(...);
 
     // The service should take a snapshot and store its state to the provided archive
+    // 在此将当前内存状态保存到快照里
     void onTakeSnapshot(ExclusivePublication snapshotPublication);
 
     // Notify that the cluster node has changed role.
     void onRoleChange(Cluster.Role newRole);
 
     // An election has been successful and a leader has entered a new term.
-    default void onNewLeadershipTermEvent;
+    default void onNewLeadershipTermEvent(...);
 }
 ```
 
+所以aeron主要有两种文件：
 
+* 一种是快照文件，每次打快照时进行保存一份
+* 一种是message log文件
 
+#### aeron快照
 
+如何打快照？
 
+```java
+boolean snapshot = ClusterTool.snapshot(new File(this.cluster.context().clusterDirectoryName()), new PrintStream(System.out));
+```
 
+如何清理快照文件？
 
+```java
+RecordingLog recordingLog = new RecordingLog(new File(consensusPath), false);
 
+// Invalidate the last snapshot taken by the cluster so that on restart it can revert to the previous one.
+boolean res = recordingLog.invalidateLatestSnapshot();
+recordingLog.close();
+```
 
+为什么需要快照？
 
+如果没有快照，每次启动时都会从最初加载log文件，显然不合适，所以需要一个快照，加载快照，然后aeron就会从快照后面一个log开始加载log文件。
+
+#### message log file
+
+如果log持续增长，也不合适，因为已经有快照了，快照之前的log是可以剪裁掉的。
+
+可以通过下面的代码剪裁log，Purge (detach and delete) segments from the beginning of a recording up to the provided new start position.
+
+```java
+AeronArchive.purgeSegments(final long recordingId, final long newStartPosition)
+```
 
