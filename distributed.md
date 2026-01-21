@@ -106,3 +106,13 @@ recordingLog.close();
 AeronArchive.purgeSegments(final long recordingId, final long newStartPosition)
 ```
 
+### 用aeron cluster设计系统
+
+介绍2种方法，一种方法是快照中存储全部状态。如果快照中存不下全部状态，可以将状态存储在数据库中。
+介绍2种方法，一种方法是快照中存储全部状态。如果快照中存不下全部状态，可以将状态存储在数据库中。
+
+#### 三阶段写
+
+下图是一种基于数据库的设计思路，称为三阶段写
+
+<img src="./3stage.png" alt="3stage" style="zoom:100%;" />
