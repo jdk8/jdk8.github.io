@@ -127,3 +127,4 @@ AeronArchive.purgeSegments(final long recordingId, final long newStartPosition)
 
 ❓为什么要分三阶段，而不是在集群共识后统一更新内存？
 
+因为要在共识前生成db更新log，db更新log作为集群共识消息的一部分，**持久化模块**会消费集群消息，以事务的方式更新db中的业务、seq以及Aeron的position。在这种模式下，Aeron的快照是空文件（只记录position），真正的快照存储在数据库中。当Aeron集群启动时，找到最新的快照，判定db中持久化的position是否大于等于快照的position，如果是，则加载这个快照，反之，这个快照无效，再找一个更早的快照，直到满足加载条件为止。
