@@ -17,6 +17,8 @@
 2. [游戏服务端引擎](https://jdk8.github.io/game)
 3. [领域驱动设计](https://jdk8.github.io/ddd)
 4. [物联网开发](https://jdk8.github.io/iot)
+5. [分库分表](https://jdk8.github.io/dbshard)
+
 
 ## 业余研究
 1. [量化工程](https://jdk8.github.io/quant)
