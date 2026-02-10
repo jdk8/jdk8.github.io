@@ -12,16 +12,13 @@
 9. [git](https://jdk8.github.io/git)
 10. [distributed](https://jdk8.github.io/distributed)
 
-## 工作经验
+## 领域
 1. [搭建算法在线服务](https://jdk8.github.io/algorithm)
 2. [游戏服务端引擎](https://jdk8.github.io/game)
 3. [领域驱动设计](https://jdk8.github.io/ddd)
 4. [物联网开发](https://jdk8.github.io/iot)
 5. [分库分表](https://jdk8.github.io/dbshard)
-
-
-## 业余研究
-1. [量化工程](https://jdk8.github.io/quant)
-2. [期权期货学习笔记](https://jdk8.github.io/future)
-3. [期货期权结算交割](https://jdk8.github.io/clear.svg)
-4. [RULE保证金](https://jdk8.github.io/rule)
+6. [量化工程](https://jdk8.github.io/quant)
+7. [期权期货学习笔记](https://jdk8.github.io/future)
+8. [期货期权结算交割](https://jdk8.github.io/clear.svg)
+9. [RULE保证金](https://jdk8.github.io/rule)
